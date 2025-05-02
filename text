@@ -1,0 +1,25 @@
+<script type="module">
+  // Import the functions you need from the SDKs you need
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+  import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-analytics.js";
+  // TODO: Add SDKs for Firebase products that you want to use
+  // https://firebase.google.com/docs/web/setup#available-libraries
+
+  // Your web app's Firebase configuration
+  // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+  
+  
+  const firebaseConfig = {
+    apiKey: "AIzaSyBgA8xksVyOVRhNGoQd3_HboBMIhvH4-0g",
+    authDomain: "meow-net.firebaseapp.com",
+    projectId: "meow-net",
+    storageBucket: "meow-net.firebasestorage.app",
+    messagingSenderId: "679008356104",
+    appId: "1:679008356104:web:494f53372e0ae1ec400ebd",
+    measurementId: "G-2CRH0EYT5S"
+  };
+
+  // Initialize Firebase
+  const app = initializeApp(firebaseConfig);
+  const analytics = getAnalytics(app);
+</script>

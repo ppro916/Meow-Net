@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Meow Net</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background: linear-gradient(135deg, #f8f9fa, #dceefc);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      flex-direction: column;
+    }
+
+    #auth-container, #chat-container {
+      background-color: #FEF8E8;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      width: 90%;
+      max-width: 500px;
+      overflow-y: auto;
+    }
+
+    h2, h3 {
+      margin-bottom: 10px;
+      color: #333;
+    }
+
+    button {
+      padding: 10px 20px;
+      background-color: #ff9800;
+      border: none;
+      border-radius: 8px;
+      color: white;
+      font-size: 1rem;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+
+    textarea, input {
+      width: 100%;
+      padding: 8px;
+      margin-top: 10px;
+      box-sizing: border-box;
+    }
+
+    .post {
+      background: #f3f3f3;
+      padding: 10px;
+      border-radius: 8px;
+      margin-top: 10px;
+      text-align: left;
+    }
+
+    .like-btn {
+      background: #03a9f4;
+      margin-top: 5px;
+    }
+
+    #user-list button {
+      display: block;
+      margin: 5px 0;
+      width: 100%;
+      background: #4caf50;
+    }
+
+    #chat-box {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: #FEDFCA;
+      z-index: 1000;
+      padding: 10px;
+      display: none;
+      flex-direction: column;
+      box-sizing: border-box;
+    }
+
+    #chat-messages {
+      flex: 1;
+      overflow-y: auto;
+      background-image: url('cat_chat_bg.jpg');
+      background-size: cover;
+      background-position: center;
+      padding: 10px;
+      border-radius: 8px;
+      margin: 10px 0;
+    }
+
+    #chat-input-container {
+      display: flex;
+      gap: 2px;
+      background: #FEDFCA;
+      padding: 10px 0 0;
+      border-top: 1px solid #ccc;
+      position: sticky;
+      bottom: 0;
+      justify-content: flex-start;
+    }
+
+    #chat-input-container input {
+      flex: 0 0 80%;
+      padding: 8px;
+    }
+
+    #chat-input-container button {
+      flex: 0 0 20%;
+      padding: 8px 16px;
+    }
+
+    .message {
+      padding: 8px;
+      border-radius: 8px;
+      margin: 5px 0;
+      max-width: 70%;
+      clear: both;
+    }
+
+    .message-left {
+      background-color: #e0f7fa;
+      text-align: left;
+      float: left;
+    }
+
+    .message-right {
+      background-color: #c8e6c9;
+      text-align: right;
+      float: right;
+    }
+
+    #users-list-container {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.7);
+      color: white;
+      padding: 20px;
+      overflow-y: auto;
+      z-index: 999;
+    }
+
+    #see-users-btn {
+      background-color: #ff5722;
+    }
+
+    #close-chat-btn {
+      align-self: flex-end;
+      background-color: #f44336;
+      margin-bottom: 2px;
+    }
+  </style>
+</head>
+<body>
+  <div id="auth-container">
+    <img src="logo.png" alt="Meow Net Logo" style="width: 120px; height: auto; margin-bottom: 20px;" />
+    <h2>Welcome to Meow Net 🐱</h2>
+    <button onclick="login()">Login with Google</button>
+  </div>
+
+  <div id="chat-container" style="display: none;">
+          
+              <!-- Updated button layout here -->
+    <div style="display: flex; gap: 10px; margin-top: 10px; justify-content: flex-end;">
+            
+            
+           
+
+
+            <button id="see-users-btn" onclick="openUsersList()">See All Users 😺</button>
+            <button onclick="logout()">Logout 🐾</button>
+    </div>
+          
+    <h2>Meow Feed 🐾</h2>
+    <p id="user-name"></p>
+    <textarea id="new-post" placeholder="What's on your cat mind? 🐈"></textarea>
+    <button onclick="createPost()">Post</button>
+    <div id="posts"></div>
+
+
+  </div>
+
+  <div id="users-list-container">
+    
+    <button onclick="closeUsersList()">Close</button>
+    <h3 style="color: whitesmoke;">Users List 🐈‍⬛</h3>
+    <div id="user-list"></div>
+  </div>
+
+  <div id="chat-box">
+    <button id="close-chat-btn" onclick="closeChat()">Close Chat</button>
+    <h3 id="chat-with"></h3>
+    <div id="chat-messages"></div>
+    <div id="chat-input-container">
+      <input type="text" id="chat-input" placeholder="Type a message... 🐾" />
+      <button onclick="sendMessage()">Send 🐱</button>
+    </div>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyBgA8xksVyOVRhNGoQd3_HboBMIhvH4-0g",
+      authDomain: "meow-net.firebaseapp.com",
+      projectId: "meow-net",
+      storageBucket: "meow-net.appspot.com",
+      messagingSenderId: "679008356104",
+      appId: "1:679008356104:web:494f53372e0ae1ec400ebd",
+      measurementId: "G-2CRH0EYT5S"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    auth.onAuthStateChanged(user => {
+      if (user) {
+        document.getElementById('auth-container').style.display = 'none';
+        document.getElementById('chat-container').style.display = 'block';
+        document.getElementById('user-name').textContent = "Logged in as: " + user.displayName;
+        db.collection("users").doc(user.uid).set({
+          name: user.displayName,
+          email: user.email,
+          uid: user.uid
+        }, { merge: true });
+        loadPosts();
+        loadUsers();
+      } else {
+        document.getElementById('auth-container').style.display = 'block';
+        document.getElementById('chat-container').style.display = 'none';
+      }
+    });
+
+    function login() {
+      const provider = new firebase.auth.GoogleAuthProvider();
+      auth.signInWithPopup(provider).catch(error => {
+        alert("Google Sign-In Failed!");
+      });
+    }
+
+    function logout() {
+      auth.signOut();
+    }
+
+    function createPost() {
+      const text = document.getElementById("new-post").value.trim();
+      if (text === "") return;
+      const user = auth.currentUser;
+
+      db.collection("posts").add({
+        text,
+        user: user.displayName,
+        uid: user.uid,
+        timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+        likes: 0,
+        likedBy: []
+      });
+
+      document.getElementById("new-post").value = "";
+    }
+
+    function loadPosts() {
+      db.collection("posts").orderBy("timestamp", "desc").onSnapshot(snapshot => {
+        const postsDiv = document.getElementById("posts");
+        postsDiv.innerHTML = "";
+        snapshot.forEach(doc => {
+          const post = doc.data();
+          const postEl = document.createElement("div");
+          postEl.className = "post";
+          postEl.innerHTML = `
+            <strong>${post.user} 🐱</strong>
+            <p>${post.text}</p>
+            <button class="like-btn" onclick="likePost('${doc.id}')">Like 🐾 (${post.likes || 0})</button>
+          `;
+          postsDiv.appendChild(postEl);
+        });
+      });
+    }
+
+    function likePost(postId) {
+      const user = auth.currentUser;
+      const postRef = db.collection("posts").doc(postId);
+
+      postRef.get().then(doc => {
+        const postData = doc.data();
+        const likedBy = postData.likedBy || [];
+
+        if (likedBy.includes(user.uid)) {
+          alert("You already liked this post!");
+          return;
+        }
+
+        postRef.update({
+          likes: firebase.firestore.FieldValue.increment(1),
+          likedBy: firebase.firestore.FieldValue.arrayUnion(user.uid)
+        });
+      });
+    }
+
+    function loadUsers() {
+      const user = auth.currentUser;
+      db.collection("users").get().then(snapshot => {
+        const list = document.getElementById("user-list");
+        list.innerHTML = '';
+        snapshot.forEach(doc => {
+          const data = doc.data();
+          if (data.uid !== user.uid) {
+            const btn = document.createElement("button");
+            btn.textContent = data.name;
+            btn.onclick = () => openChat(data.uid, data.name);
+            list.appendChild(btn);
+          }
+        });
+      });
+    }
+
+    function openUsersList() {
+      document.getElementById('users-list-container').style.display = 'block';
+    }
+
+    function closeUsersList() {
+      document.getElementById('users-list-container').style.display = 'none';
+    }
+
+    let currentChatId = '';
+    let unsubscribeChat = null;
+
+    function openChat(otherUid, otherName) {
+      const currentUid = auth.currentUser.uid;
+      const chatId = [currentUid, otherUid].sort().join("_");
+      currentChatId = chatId;
+
+      document.getElementById("chat-with").textContent = "Chat with: " + otherName;
+      document.getElementById("chat-box").style.display = "flex";
+      closeUsersList();
+
+      if (unsubscribeChat) unsubscribeChat();
+
+      unsubscribeChat = db.collection("chats").doc(chatId).collection("messages")
+        .orderBy("timestamp")
+        .onSnapshot(snapshot => {
+          const chatBox = document.getElementById("chat-messages");
+          chatBox.innerHTML = '';
+          snapshot.forEach(doc => {
+            const msg = doc.data();
+            const div = document.createElement("div");
+
+            const user = auth.currentUser;
+            const isOwnMessage = msg.sender === user.uid;
+            div.className = "message " + (isOwnMessage ? "message-right" : "message-left");
+            div.innerHTML = `<strong>${msg.senderName} 🐱</strong><br/>${msg.text}`;
+
+            chatBox.appendChild(div);
+          });
+          chatBox.scrollTop = chatBox.scrollHeight;
+        });
+    }
+
+    function sendMessage() {
+      const text = document.getElementById("chat-input").value.trim();
+      if (!text || !currentChatId) return;
+
+      const user = auth.currentUser;
+
+      db.collection("chats").doc(currentChatId).collection("messages").add({
+        sender: user.uid,
+        senderName: user.displayName,
+        text: text,
+        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+      });
+
+      document.getElementById("chat-input").value = "";
+    }
+
+    function closeChat() {
+      document.getElementById("chat-box").style.display = "none";
+      if (unsubscribeChat) unsubscribeChat();
+    }
+  </script>
+</body>
+</html>
