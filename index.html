@@ -243,6 +243,16 @@
       }
     });
 
+    // Escape user-generated text before inserting it into the DOM via innerHTML
+    function escapeHtml(value) {
+      return String(value == null ? "" : value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+    }
+
     function login() {
       const provider = new firebase.auth.GoogleAuthProvider();
       auth.signInWithPopup(provider).catch(error => {
@@ -280,8 +290,8 @@
           const postEl = document.createElement("div");
           postEl.className = "post";
           postEl.innerHTML = `
-            <strong>${post.user} 🐱</strong>
-            <p>${post.text}</p>
+            <strong>${escapeHtml(post.user)} 🐱</strong>
+            <p>${escapeHtml(post.text)}</p>
             <button class="like-btn" onclick="likePost('${doc.id}')">Like 🐾 (${post.likes || 0})</button>
           `;
           postsDiv.appendChild(postEl);
@@ -360,7 +370,7 @@
             const user = auth.currentUser;
             const isOwnMessage = msg.sender === user.uid;
             div.className = "message " + (isOwnMessage ? "message-right" : "message-left");
-            div.innerHTML = `<strong>${msg.senderName} 🐱</strong><br/>${msg.text}`;
+            div.innerHTML = `<strong>${escapeHtml(msg.senderName)} 🐱</strong><br/>${escapeHtml(msg.text)}`;
 
             chatBox.appendChild(div);
           });
